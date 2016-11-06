@@ -90,6 +90,6 @@ ENV/
 .ropeproject
 .DS_Store
 .idea/
-spark-2.0.1-bin-hadoop2.7/
 summrazie-kr/
-zeppelin-0.6.2/
+jars/
+lib_packages/
