@@ -1,3 +1,3 @@
 import bs4
 
-print("hello")
+print("use celery")
