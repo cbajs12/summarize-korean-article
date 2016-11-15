@@ -68,14 +68,14 @@ class Crawler:
             return 1 + len(page_num)
         return 1
 
-    def get_url(self, days, specific_sector):
+    def get_url(self, days, sid):
         """
         Get target article list urls
         Args:
             days: wanted article from days ago
-            specific_sector: wanted sector list for crawling
+            sid: Specific tag for crawling
 
-        Returns: target article url list
+        Returns: target article url dict
 
         """
         sid1s = {"IT": 105, "경제": 101, "정치": 100, "사회": 102, "생활": 103, "세계": 104, "연예": 106, "스포츠": 107, "오피니언": 110}
@@ -92,58 +92,56 @@ class Crawler:
                     "농구": "78b", "배구": 790, "골프": 792, "종합": 794, "e스포츠": "79a"}
         sid2s_en = {"연예가화제": 221, "방송/TV": 224, "드라마": 225, "영화": 222, "해외연예": 309}
 
-        rotate = dict()
-        if specific_sector.__len__() != 0:
-            for s in specific_sector:
-                rotate[s] = sid1s[s]
-        else:
-            rotate = sid1s
-
-        urls = list()
-
-        if rotate.__len__() == 0:
-            return urls
+        urls = dict()
 
         d = datetime.today()
 
         for i in range(days):
             article_date = self.change_date_format(d - timedelta(i))
             sid2 = None
-            for s1 in rotate.keys():
-                if s1 == "IT":
-                    sid2 = sid2s_it
-                elif s1 == "경제":
-                    sid2 = sid2s_ec
-                elif s1 == "정치":
-                    sid2 = sid2s_po
-                elif s1 == "사회":
-                    sid2 = sid2s_so
-                elif s1 == "생활":
-                    sid2 = sid2s_lf
-                elif s1 == "세계":
-                    sid2 = sid2s_wo
-                elif s1 == "연예":
-                    sid2 = sid2s_en
-                elif s1 == "스포츠":
-                    sid2 = sid2s_sp
 
-                url = "http://news.naver.com/main/list.nhn?mode=LS2D&mid=sec" + "&sid1=" + str(rotate[s1])
-                print(url)
-                if sid2 is not None:
-                    for s2 in sid2.values():
-                        url += "&sid2=" + str(s2) + "&date=" + article_date
+            if sid == "IT":
+                sid2 = sid2s_it
+            elif sid == "경제":
+                sid2 = sid2s_ec
+            elif sid == "정치":
+                sid2 = sid2s_po
+            elif sid == "사회":
+                sid2 = sid2s_so
+            elif sid == "생활":
+                sid2 = sid2s_lf
+            elif sid == "세계":
+                sid2 = sid2s_wo
+            elif sid == "연예":
+                sid2 = sid2s_en
+            elif sid == "스포츠":
+                sid2 = sid2s_sp
 
-                        pages = self.get_pages_count(url + "&page=1")
-                        for page in range(pages):
-                            final_url = url + "&page=" + str(page + 1)
-                            urls.append(final_url)
-                else:
+            url = "http://news.naver.com/main/list.nhn?mode=LS2D&mid=sec" + "&sid1=" + str(sid1s[sid])
+            print(url)
+            l = list()
+            if sid2 is not None:
+                for s2 in sid2.values():
+                    url += "&sid2=" + str(s2) + "&date=" + article_date
+
                     pages = self.get_pages_count(url + "&page=1")
                     for page in range(pages):
                         final_url = url + "&page=" + str(page + 1)
-                        urls.append(final_url)
+                        l.append(final_url)
+
+                    urls[s2] = l
+            else:
+                pages = self.get_pages_count(url + "&page=1")
+                for page in range(pages):
+                    final_url = url + "&page=" + str(page + 1)
+                    l.append(final_url)
+
+                urls["opinion"] = l
 
         return urls
+
+    def get_content(self, urls):
+        return True
 
 if __name__ == "__main__":
     target = ["정치", "세계"]
