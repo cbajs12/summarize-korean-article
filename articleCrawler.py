@@ -1,20 +1,22 @@
 # -*- coding: utf-8 -*-
 
-from datetime import datetime, date, timedelta
+from datetime import datetime, timedelta
 import requests
 import bs4
 import time
+import urllib.parse as urlparse
+from articleDTO import Article
 
 
 class Crawler:
     def get_date_from_news(self, article_date):
         """
         Get date from article and chage its format(YYYY-MM-DD) to YYYYMMDD format
+
         Args:
             article_date: article date format (YYYY-MM-DD)
 
         Returns: changed date format (YYYYMMDD)
-
         """
         year = article_date[0:4]
         month = article_date[5:7]
@@ -24,11 +26,11 @@ class Crawler:
     def change_date_format(self, d):
         """
         Change datetime format to YYYYMMDD format
+
         Args:
             d: datetime data
 
         Returns: YYYYMMDD format data
-
         """
         today = str(d.year)
         mon = ""
@@ -52,11 +54,11 @@ class Crawler:
     def get_pages_count(self, url):
         """
         Counting pages of articles
+
         Args:
             url: get article
 
         Returns: counts
-
         """
         res = requests.get(url)
         html_content = res.text
@@ -71,12 +73,12 @@ class Crawler:
     def get_url(self, days, sid):
         """
         Get target article list urls
+
         Args:
             days: wanted article from days ago
             sid: Specific tag for crawling
 
         Returns: target article url dict
-
         """
         sid1s = {"IT": 105, "경제": 101, "정치": 100, "사회": 102, "생활": 103, "세계": 104, "연예": 106, "스포츠": 107, "오피니언": 110}
         sid2s_it = {"인터넷/SNS": 226, "IT일반": 230, "보안/해킹": 732, "컴퓨터": 283,
@@ -92,9 +94,8 @@ class Crawler:
                     "농구": "78b", "배구": 790, "골프": 792, "종합": 794, "e스포츠": "79a"}
         sid2s_en = {"연예가화제": 221, "방송/TV": 224, "드라마": 225, "영화": 222, "해외연예": 309}
 
-        urls = dict()
-
         d = datetime.today()
+        l = list()
 
         for i in range(days):
             article_date = self.change_date_format(d - timedelta(i))
@@ -118,32 +119,116 @@ class Crawler:
                 sid2 = sid2s_sp
 
             url = "http://news.naver.com/main/list.nhn?mode=LS2D&mid=sec" + "&sid1=" + str(sid1s[sid])
-            print(url)
             l = list()
             if sid2 is not None:
-                for s2 in sid2.values():
-                    url += "&sid2=" + str(s2) + "&date=" + article_date
+                for key, values in sid2.items():
+                    mid_url = url + "&sid2=" + str(values) + "&date=" + article_date
 
-                    pages = self.get_pages_count(url + "&page=1")
+                    pages = self.get_pages_count(mid_url + "&page=1")
                     for page in range(pages):
-                        final_url = url + "&page=" + str(page + 1)
+                        final_url = mid_url + "&page=" + str(page + 1)
                         l.append(final_url)
 
-                    urls[s2] = l
             else:
                 pages = self.get_pages_count(url + "&page=1")
                 for page in range(pages):
                     final_url = url + "&page=" + str(page + 1)
                     l.append(final_url)
 
-                urls["opinion"] = l
+        return l
 
-        return urls
+    def get_news(self, urls):
+        """
+        Get article urls from article paging urls
 
-    def get_content(self, urls):
-        return True
+        Args:
+            urls: list of article paging urls
+
+        Returns: list of article urls
+        """
+        url_lists = list()
+
+        for url in urls:
+            res = requests.get(url)
+            html_content = res.text
+            navigator = bs4.BeautifulSoup(html_content, 'html5lib')
+
+            headlines = navigator.find("ul", {"class": "type06_headline"})
+
+            if headlines is not None:
+                headline = headlines.find_all("dt")
+                result_list = [item.a for item in headline]
+
+            normals = navigator.find("ul", {"class": "type06"})
+
+            if normals is not None:
+                normal = normals.find_all("dt")
+                for item in normal:
+                    result_list.append(item.a)
+
+            url_lists = url_lists + [item['href'] for item in result_list]
+
+            url_lists = list(set(url_lists))    # remove duplicates
+            # time.sleep(0.000001)
+
+        for index, url_list in enumerate(url_lists):
+            result_text = '[%d개] %s' % (index + 1, url_list)
+            print(result_text)
+        return url_lists
+
+    def get_content(self, urls, tag):
+        """
+        Get article contents from article urls
+
+        Args:
+            urls: article urls
+            tag: article tag
+
+        Returns: list of article DTOs
+        """
+        results = list()
+
+        for url in urls:
+            sub_tag = dict(urlparse.parse_qsl(urlparse.urlsplit(url).query))["sid2"]
+
+            # print(url)
+            res = requests.get(url)
+            html_content = res.text
+            navigator = bs4.BeautifulSoup(html_content, 'html5lib')
+
+            contents = navigator.find("div", id="main_content")
+            header = contents.h3.get_text().strip().replace("\"\r\n\t", '')
+
+            text = ""
+            content = contents.find("div", id="articleBodyContents")
+            # print(content)
+            if content.find("table") is None:
+                text = content.get_text()
+            else:
+                continue
+
+            if text == "":
+                continue
+
+            text = text.strip().replace("\"\r\n\t", '')
+
+            article = Article()
+            article.set_title(header)
+            article.set_content(text)
+            article.set_tag(tag)
+            article.set_sub_tag(sub_tag)
+            results.append(article)
+            print(str(article) + ' Original')
+        return results
 
 if __name__ == "__main__":
-    target = ["정치", "세계"]
-    result = Crawler().get_url(1, target)
-    print(result)
+    target = "정치"
+    c = Crawler()
+    # result = c.get_url(1, target)
+    # print(result)
+    # c.get_news(result)
+    c.get_content(["http://news.naver.com/main/read.nhn?mode=LS2D&mid=sec&sid1=100&sid2=269&oid=009&aid=0003837948"], "정치")
+
+    # s = 'http://news.naver.com/main/list.nhn?mode=LS2D&mid=sec&sid1=100&sid2=266&date=20161116&page=2'
+    # d = dict(urlparse.parse_qsl(urlparse.urlsplit(s).query))["sid2"]
+    # print(d)
