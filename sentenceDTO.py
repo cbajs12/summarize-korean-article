@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+
 class Sentence:
     def __init__(self, aid="", content=""):
         self.sid = 0

@@ -3,9 +3,11 @@
 import pymysql
 import os
 import sys
-import re
 from articleCrawler import Crawler
 from articleDTO import Article
+from sentenceDTO import Sentence
+from awordDTO import Awords
+from swordDTO import Swords
 from splitArticle import Splitting
 
 
@@ -69,7 +71,7 @@ class Controller:
             self.db.commit()
             print("Article Insertion Success!\n[%s]" % str(info))
 
-    def get_ariticles(self, tag, mode):
+    def get_articles(self, tag, mode):
         """
         Get articles from DB according to mode and tag
 
@@ -92,8 +94,7 @@ class Controller:
             return contents
 
         values = (tag)
-        cur.execute(sql, values)
-        # self.db.commit()
+        cur.execute(sql, values)        # self.db.commit()
         row = cur.fetchall()
         total = len(row)
 
@@ -113,17 +114,68 @@ class Controller:
                 print(str(content))
         return contents
 
-    def sentence_process(self, tags, mode):
+    def get_awords(self, aid):
+        """
+        Get words from DB according to article id
+
+        Args:
+            aid : article id
+
+        Returns: list of awords DTOs
+        """
+        cur = self.db.cursor()
+        sql = """SELECT * FROM awords WHERE aid=%s"""
+        values = (aid)
         contents = list()
-        se = Splitting()
+        cur.execute(sql, values)  # self.db.commit()
+        row = cur.fetchall()
+        total = len(row)
+
+        if total < 1:
+            print('No Words')
+        else:
+            for record in range(total):
+                content = Awords()
+                content.set_id(row[record][0])
+                content.set_aid(row[record][1])
+                content.set_word(row[record][2].decode('utf8', 'surrogatepass'))
+                content.set_count(row[record][3])
+                contents.append(content)
+                print(str(content))
+        return contents
+
+    def sentence_process(self, tags, mode):
+        """
+        Split article to sentences and save them to DB
+
+        Args:
+            tags: wanted tags for splitting
+            mode: sentence or word
+        """
+        contents = list()
         for tag in tags:
-            contents = self.get_ariticles(tag, mode)
-            for content in contents:
-                results = se.split_article(content.get_content)
-                self.set_sentences(content.get_id, results)
-                self.update_article_scheck(content)
+            contents = self.get_articles(tag, mode)
+            if mode == "s":
+                se = Splitting("k")
+                for content in contents:
+                    results = se.split_article_to_sentence(content.get_content)
+                    self.set_sentences(content.get_id, results)
+                    self.update_article_scheck(content)
+            elif mode == "w":
+                se = Splitting("k")
+                for content in contents:
+                    results = se.split_article_to_words(content.get_content)
+                    self.set_awords(content.get_id, results)
+                    self.update_article_wcheck(content)
 
     def set_sentences(self, aid, sentences):
+        """
+        Save sentences to DB
+
+        Args:
+            aid: article id
+            sentences: list of sentences
+        """
         cur = self.db.cursor()
         sql = ""
         for sentence in sentences:
@@ -134,13 +186,162 @@ class Controller:
             self.db.commit()
             print("Sentence Insertion Success!\n[%s]" % str(sentence))
 
+    def set_awords(self, aid, words):
+        """
+        Save words of article to DB
+
+        Args:
+            aid: article id
+            words: list of words
+        """
+        cur = self.db.cursor()
+        sql = ""
+        for word in words:
+            sql = "INSERT INTO awords (aid, awords, acounts) " \
+                  "VALUES (%s, %s, 0)"
+            values = (aid, word)
+            cur.execute(sql, values)
+            self.db.commit()
+            print("Awords Insertion Success!\n[%s]" % str(word))
+
     def update_article_scheck(self, content):
+        """
+        Update scheck flag of article table
+
+        Args:
+            content: article DTO
+        """
         cur = self.db.cursor()
         sql = "UPDATE article SET scheck=1 WHERE aid=%s"
         values = (content.get_id)
         cur.execute(sql, values)
         self.db.commit()
         print("Update Article scheck Success!\n[%s]" % str(content))
+
+    def update_article_wcheck(self, content):
+        """
+        Update wcheck flag of article table
+
+        Args:
+            content: article DTO
+        """
+        cur = self.db.cursor()
+        sql = "UPDATE article SET wcheck=1 WHERE aid=%s"
+        values = (content.get_id)
+        cur.execute(sql, values)
+        self.db.commit()
+        print("Update Article wcheck Success!\n[%s]" % str(content))
+
+    def get_sentences(self, aid):
+        """
+        Get sentences from DB according to article id
+
+        Args:
+            aid: article id
+
+        Returns: list of sentence DTOs
+        """
+        cur = self.db.cursor()
+        sql = """SELECT * FROM sentence WHERE aid=%s AND wcheck=0"""
+        values = (aid)
+
+        contents = list()
+        cur.execute(sql, values)    # self.db.commit()
+        row = cur.fetchall()
+        total = len(row)
+
+        if total < 1:
+            print('No Sentences')
+        else:
+            for record in range(total):
+                content = Sentence()
+                content.set_id(row[record][0])
+                content.set_aid(row[record][1])
+                content.set_content(row[record][2].decode('utf8', 'surrogatepass'))
+                content.set_weight(row[record][3])
+                content.set_wcheck(row[record][4])
+                contents.append(content)
+                print(str(content))
+        return contents
+
+    def swords_process(self, aid):
+        """
+        Split sentence to words and save them to DB
+
+        Args:
+            aid: article id
+        """
+        se = Splitting("k")
+        contents = self.get_sentences(aid)
+        for content in contents:
+            results = se.split_sentence_to_words(content.get_content)
+            self.set_swords(content.get_id, content.get_aid, results)
+            self.update_sentence_wcheck(content)
+
+    def set_swords(self, sid, aid, words):
+        """
+        Save words of sentence to DB
+
+        Args:
+            sid: sentence id
+            aid: article id
+            words: list of words
+        """
+        cur = self.db.cursor()
+        sql = ""
+        for word in words:
+            sql = "INSERT INTO swords (swords, aid, sid, scounts) " \
+                  "VALUES (%s, %s, %s, 0)"
+            values = (word, aid, sid)
+            cur.execute(sql, values)
+            self.db.commit()
+            print("Swords Insertion Success!\n[%s]" % str(word))
+
+    def update_sentence_wcheck(self, content):
+        """
+        Update wcheck flag of sentence table
+
+        Args:
+            content: sentence DTO
+        """
+        cur = self.db.cursor()
+        sql = "UPDATE sentence SET wcheck=1 WHERE sid=%s"
+        values = (content.get_id)
+        cur.execute(sql, values)
+        self.db.commit()
+        print("Update Sentence wcheck Success!\n[%s]" % str(content))
+
+    def get_swords(self, sid):
+        """
+        Get words from DB according to sentence id
+
+        Args:
+            sid: sentence id
+
+        Returns: list of swords DTOs
+        """
+        cur = self.db.cursor()
+        sql = """SELECT * FROM swords WHERE sid=%s"""
+        values = (sid)
+
+        contents = list()
+        cur.execute(sql, values)  # self.db.commit()
+        row = cur.fetchall()
+        total = len(row)
+
+        if total < 1:
+            print('No Words')
+        else:
+            for record in range(total):
+                content = Swords()
+                content.set_id(row[record][0])
+                content.set_word(row[record][1].decode('utf8', 'surrogatepass'))
+                content.set_aid(row[record][2])
+                content.set_sid(row[record][3])
+                content.set_count(row[record][4])
+                contents.append(content)
+                print(str(content))
+        return contents
 
 
 if __name__ == "__main__":
@@ -149,8 +350,9 @@ if __name__ == "__main__":
     # result = cr.get_content(["http://news.naver.com/main/read.nhn?mode=LS2D&mid=sec&sid1=100&sid2=269&oid=009&aid=0003837948"], "정치")
     # print(result)
     # c.set_articles(result)
-    c.sentence_process(["정치"], "s")
-
+    # c.get_sentences(1)
+    # c.swords_process(1)
+    c.sentence_process(["정치"], "w")
 
 
 

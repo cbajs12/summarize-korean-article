@@ -1,3 +1,5 @@
-import bs4
+# -*- coding: utf-8 -*-
 
-print("use celery")
+if __name__ == "__main__":
+    print("use celery")
+
