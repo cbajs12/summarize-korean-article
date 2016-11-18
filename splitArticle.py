@@ -39,61 +39,57 @@ class Splitting:
         results = self.kkma.sentences(content)
         return results
 
-    def split_sentence_to_words(self, sentence):
+    def split_text_to_words(self, text):
         """
-        Split sentence to words
+        Split text to words
 
         Args:
-            sentence: sentence string
+            text: text string
 
         Returns: list of words
         """
         words = list()
         if self.mode == "t":
-            words = self.twitter.nouns(sentence)
+            words = self.twitter.nouns(text)
         elif self.mode == "k":
-            words = self.kkma.nouns(sentence)
+            words = self.kkma.nouns(text)
         elif self.mode == "h":
-            words = self.hannaum.nouns(sentence)
+            words = self.hannaum.nouns(text)
         elif self.mode == "ko":
-            words = self.komoran.nouns(sentence)
+            words = self.komoran.nouns(text)
         elif self.mode == "m":
-            words = self.mecab.nouns(sentence)
+            words = self.mecab.nouns(text)
 
         print(words)
         return words
 
-    def split_article_to_words(self, article):      # 어떤 것이 가장 효율이 좋은가
-        """
-        Split article to words
-
-        Args:
-            article: article string
-
-        Returns: list of words
-        """
-        words = list()
-        if self.mode == "t":
-            words = self.twitter.nouns(article)
-        elif self.mode == "k":
-            words = self.kkma.nouns(article)
-        elif self.mode == "h":
-            words = self.hannaum.nouns(article)
-        elif self.mode == "ko":
-            words = self.komoran.nouns(article)
-        elif self.mode == "m":
-            words = self.mecab.nouns(article)
-
-        print(words)
-        return words
-
-    # 중복되는 단어 카운팅해서 저장
     def check_duplicates_in_words(self, words):
+        """
+        Eliminate duplicated words and count them
+        Args:
+            words: list of words
 
+        Returns: dictionary of word and count
+
+        """
         results = dict()
 
+        for word in words:
+            temp = results.get(word)
+            if temp is None:
+                results[word] = 1
+            else:
+                results[word] += 1
+
+        print(results)
         return results
 
 
 if __name__ == "__main__":
-    print("a")
+    ar = "이화여대 교수들은 입학 전형 과정에서 정씨를 위해 서류평가 상위점수 학생들의 면접 점수를 조정했고"
+    sh = Splitting("h")
+
+    print("h")
+    b = sh.split_text_to_words(ar)
+    sh.check_duplicates_in_words(b)
+

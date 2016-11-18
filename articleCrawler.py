@@ -3,7 +3,6 @@
 from datetime import datetime, timedelta
 import requests
 import bs4
-import time
 import urllib.parse as urlparse
 from articleDTO import Article
 

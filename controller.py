@@ -162,9 +162,10 @@ class Controller:
                     self.set_sentences(content.get_id, results)
                     self.update_article_scheck(content)
             elif mode == "w":
-                se = Splitting("k")
+                se = Splitting("h")
                 for content in contents:
-                    results = se.split_article_to_words(content.get_content)
+                    temp = se.split_text_to_words(content.get_content)
+                    results = se.check_duplicates_in_words(temp)
                     self.set_awords(content.get_id, results)
                     self.update_article_wcheck(content)
 
@@ -192,17 +193,17 @@ class Controller:
 
         Args:
             aid: article id
-            words: list of words
+            words: dictionary of words
         """
         cur = self.db.cursor()
         sql = ""
-        for word in words:
+        for key, value in words.items():
             sql = "INSERT INTO awords (aid, awords, acounts) " \
-                  "VALUES (%s, %s, 0)"
-            values = (aid, word)
+                  "VALUES (%s, %s, %s)"
+            values = (aid, key, value)
             cur.execute(sql, values)
             self.db.commit()
-            print("Awords Insertion Success!\n[%s]" % str(word))
+            print("Awords Insertion Success!\n[%s]" % str(key))
 
     def update_article_scheck(self, content):
         """
@@ -271,10 +272,11 @@ class Controller:
         Args:
             aid: article id
         """
-        se = Splitting("k")
+        se = Splitting("h")
         contents = self.get_sentences(aid)
         for content in contents:
-            results = se.split_sentence_to_words(content.get_content)
+            temp = se.split_text_to_words(content.get_content)
+            results = se.check_duplicates_in_words(temp)
             self.set_swords(content.get_id, content.get_aid, results)
             self.update_sentence_wcheck(content)
 
@@ -285,17 +287,17 @@ class Controller:
         Args:
             sid: sentence id
             aid: article id
-            words: list of words
+            words: dictionary of words
         """
         cur = self.db.cursor()
         sql = ""
-        for word in words:
+        for key, value in words.items():
             sql = "INSERT INTO swords (swords, aid, sid, scounts) " \
-                  "VALUES (%s, %s, %s, 0)"
-            values = (word, aid, sid)
+                  "VALUES (%s, %s, %s, %s)"
+            values = (key, aid, sid, value)
             cur.execute(sql, values)
             self.db.commit()
-            print("Swords Insertion Success!\n[%s]" % str(word))
+            print("Swords Insertion Success!\n[%s]" % str(key))
 
     def update_sentence_wcheck(self, content):
         """
@@ -347,7 +349,6 @@ class Controller:
 if __name__ == "__main__":
 
     # cr = articleCrawler.Crawler()
-    # result = cr.get_content(["http://news.naver.com/main/read.nhn?mode=LS2D&mid=sec&sid1=100&sid2=269&oid=009&aid=0003837948"], "정치")
     # print(result)
     # c.set_articles(result)
     # c.get_sentences(1)
