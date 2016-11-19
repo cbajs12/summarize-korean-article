@@ -175,6 +175,51 @@ class Crawler:
             print(result_text)
         return url_lists
 
+    def get_single_news(self, url, tag):
+        """
+        Get article contents from article url
+
+        Args:
+            url: article url
+            tag: article tag
+
+        Returns: list of article DTO
+        """
+        results = list()
+
+        sub_tag = dict(urlparse.parse_qsl(urlparse.urlsplit(url).query))["sid2"]
+
+        # print(url)
+        res = requests.get(url)
+        html_content = res.text
+        navigator = bs4.BeautifulSoup(html_content, 'html5lib')
+
+        contents = navigator.find("div", id="main_content")
+        header = contents.h3.get_text().strip().replace("\"\r\n\t", '')
+
+        text = ""
+        content = contents.find("div", id="articleBodyContents")
+        # print(content)
+        if content.find("table") is None:
+            text = content.get_text()
+        else:
+            return None
+
+        if text == "":
+            print("Text is empty")
+            return None
+
+        text = text.strip().replace("\"\r\n\t", '')
+
+        article = Article()
+        article.set_title(header)
+        article.set_content(text)
+        article.set_tag(tag)
+        article.set_sub_tag(sub_tag)
+        results.append(article)
+        print(str(article) + ' Original')
+        return results
+
     def get_content(self, urls, tag):
         """
         Get article contents from article urls

@@ -53,6 +53,22 @@ class Controller:
             contents = cr.get_content(urls, sid)
             self.set_articles(contents)
 
+    def article_process_url(self, url, tag):
+        """
+        Crawling specific url article and save it to DB
+
+        Args:
+            url: list of crawling tags
+            tag: tag of article
+        """
+        cr = Crawler()
+        contents = cr.get_single_news(url, tag)
+        if contents is None:
+            print("Content is None")
+            exit()
+
+        self.set_articles(contents)
+
     def set_articles(self, contents):
         """
         Send query for article insertion
