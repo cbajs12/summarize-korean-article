@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 from konlpy.tag import Kkma
 from konlpy.tag import Twitter
 from konlpy.tag import Hannanum

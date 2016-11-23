@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 import pymysql
 import os
 import sys
@@ -30,12 +29,13 @@ class Controller:
         print("connection success!!")
         print(sys.stdin.encoding)
 
-    def article_process(self, specific_sector):
+    def article_process(self, specific_sector, days):
         """
         Crawling articles and save them to DB
 
         Args:
             specific_sector: list of crawling tags
+            days: crawling data from days to today
         """
         cr = Crawler()
 
@@ -47,8 +47,11 @@ class Controller:
         else:
             sids = specific_sector
 
+        if days is None:
+            days = 1
+
         for sid in sids:
-            urls = cr.get_url(1, sid)
+            urls = cr.get_url(days, sid)
             urls = cr.get_news(urls)
             contents = cr.get_content(urls, sid)
             self.set_articles(contents)
@@ -281,15 +284,55 @@ class Controller:
                 print(str(content))
         return contents
 
+    def get_sentences_all(self):
+        """
+        Get sentences from DB
+
+        Returns: list of sentence DTOs
+        """
+        cur = self.db.cursor()
+        sql = """SELECT * FROM sentence WHERE wcheck=0"""
+
+        contents = list()
+        cur.execute(sql)  # self.db.commit()
+        row = cur.fetchall()
+        total = len(row)
+
+        if total < 1:
+            print('No Sentences')
+        else:
+            for record in range(total):
+                content = Sentence()
+                content.set_id(row[record][0])
+                content.set_aid(row[record][1])
+                content.set_content(row[record][2].decode('utf8', 'surrogatepass'))
+                content.set_weight(row[record][3])
+                content.set_wcheck(row[record][4])
+                contents.append(content)
+                print(str(content))
+        return contents
+
     def swords_process(self, aid):
         """
-        Split sentence to words and save them to DB
+        Split sentence to words and save them to DB according to article id
 
         Args:
             aid: article id
         """
         se = Splitting("h")
         contents = self.get_sentences(aid)
+        for content in contents:
+            temp = se.split_text_to_words(content.get_content)
+            results = se.check_duplicates_in_words(temp)
+            self.set_swords(content.get_id, content.get_aid, results)
+            self.update_sentence_wcheck(content)
+
+    def swords_process_all(self):
+        """
+        Split sentence to words and save them to DB
+        """
+        se = Splitting("h")
+        contents = self.get_sentences_all()
         for content in contents:
             temp = se.split_text_to_words(content.get_content)
             results = se.check_duplicates_in_words(temp)
@@ -363,13 +406,13 @@ class Controller:
 
 
 if __name__ == "__main__":
-
+    print("hi")
     # cr = articleCrawler.Crawler()
     # print(result)
     # c.set_articles(result)
     # c.get_sentences(1)
     # c.swords_process(1)
-    c.sentence_process(["정치"], "w")
+    # c.sentence_process(["정치"], "w")
 
 
 
