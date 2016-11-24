@@ -404,6 +404,57 @@ class Controller:
                 print(str(content))
         return contents
 
+    def get_swords_count(self, sid):
+        """
+        Get words count from DB according to sentence id
+
+        Args:
+            sid: sentence id
+
+        Returns: count of words
+        """
+        cur = self.db.cursor()
+        sql = """SELECT * FROM swords WHERE sid=%s"""
+        values = (sid)
+
+        cur.execute(sql, values)  # self.db.commit()
+        row = cur.fetchall()
+        total = len(row)
+
+        return total
+
+    def get_processed_sentences(self, aid):
+        """
+        Get sentences which wcheck is 1 and specific article from DB
+
+        Args:
+            aid: article id
+
+        Returns: list of sentence DTOs
+        """
+        cur = self.db.cursor()
+        sql = """SELECT * FROM sentence WHERE wcheck=1 AND aid=%s"""
+        values = (aid)
+
+        contents = list()
+        cur.execute(sql, values)  # self.db.commit()
+        row = cur.fetchall()
+        total = len(row)
+
+        if total < 1:
+            print('No Sentences')
+        else:
+            for record in range(total):
+                content = Sentence()
+                content.set_id(row[record][0])
+                content.set_aid(row[record][1])
+                content.set_content(row[record][2].decode('utf8', 'surrogatepass'))
+                content.set_weight(row[record][3])
+                content.set_wcheck(row[record][4])
+                contents.append(content)
+                print(str(content))
+        return contents
+
 
 if __name__ == "__main__":
     print("hi")
