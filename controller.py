@@ -29,13 +29,14 @@ class Controller:
         print("connection success!!")
         print(sys.stdin.encoding)
 
-    def article_process(self, specific_sector, days):
+    def article_process(self, specific_sector, days, sid_name=None):
         """
         Crawling articles and save them to DB
 
         Args:
             specific_sector: list of crawling tags
             days: crawling data from days to today
+            sid_name: name of specific sub tag
         """
         cr = Crawler()
 
@@ -51,7 +52,11 @@ class Controller:
             days = 1
 
         for sid in sids:
-            urls = cr.get_url(days, sid)
+            if sid_name is None:
+                urls = cr.get_url(days, sid)
+            else:
+                urls = cr.get_url_special(days, sid, sid_name)
+
             urls = cr.get_news(urls)
             contents = cr.get_content(urls, sid)
             self.set_articles(contents)
@@ -163,30 +168,48 @@ class Controller:
                 print(str(content))
         return contents
 
-    def sentence_process(self, tags, mode):
+    def sentence_process(self, tags, mode, lang):
         """
         Split article to sentences and save them to DB
 
         Args:
             tags: wanted tags for splitting
             mode: sentence or word
+            lang: language for analyzing
         """
         contents = list()
-        for tag in tags:
-            contents = self.get_articles(tag, mode)
-            if mode == "s":
-                se = Splitting("k")
-                for content in contents:
-                    results = se.split_article_to_sentence(content.get_content)
-                    self.set_sentences(content.get_id, results)
-                    self.update_article_scheck(content)
-            elif mode == "w":
-                se = Splitting("h")
-                for content in contents:
-                    temp = se.split_text_to_words(content.get_content)
-                    results = se.check_duplicates_in_words(temp)
-                    self.set_awords(content.get_id, results)
-                    self.update_article_wcheck(content)
+        if lang is "kr":
+            for tag in tags:
+                contents = self.get_articles(tag, mode)
+                if mode == "s":
+                    se = Splitting("k")
+                    for content in contents:
+                        results = se.split_article_to_sentence(content.get_content)
+                        self.set_sentences(content.get_id, results)
+                        self.update_article_scheck(content)
+                elif mode == "w":
+                    se = Splitting("h")
+                    for content in contents:
+                        temp = se.split_text_to_words(content.get_content)
+                        results = se.check_duplicates_in_words(temp)
+                        self.set_awords(content.get_id, results)
+                        self.update_article_wcheck(content)
+        elif lang is "en":
+            for tag in tags:
+                contents = self.get_articles(tag, mode)
+                if mode == "s":
+                    se = Splitting("k")
+                    for content in contents:
+                        results = se.split_article_to_sentence(content.get_content)
+                        self.set_sentences(content.get_id, results)
+                        self.update_article_scheck(content)
+                elif mode == "w":
+                    se = Splitting("h")
+                    for content in contents:
+                        temp = se.split_text_to_words(content.get_content)
+                        results = se.check_duplicates_in_words(temp)
+                        self.set_awords(content.get_id, results)
+                        self.update_article_wcheck(content)
 
     def set_sentences(self, aid, sentences):
         """

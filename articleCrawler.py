@@ -135,6 +135,79 @@ class Crawler:
 
         return l
 
+    def get_url_special(self, days, sid, name):
+        """
+        Get target article list urls
+
+        Args:
+            days: wanted article from days ago
+            sid: Specific tag for crawling
+            name: name of specific sid2
+
+        Returns: target article url dict
+        """
+        sid1s = {"IT": 105, "경제": 101, "정치": 100, "사회": 102, "생활": 103, "세계": 104, "연예": 106, "스포츠": 107, "오피니언": 110}
+        sid2s_it = {"인터넷/SNS": 226, "IT일반": 230, "보안/해킹": 732, "컴퓨터": 283,
+                    "게임/리뷰": 229, "과학 일반": 228}
+        sid2s_ec = {"금융": 259, "증권": 258, "산업/재계": 261, "중기/벤쳐": 771,
+                    "부동산": 260, "글로벌경제": 262, "경제일반": 263}
+        sid2s_so = {"사건사고": 249, "교육": 250, "노동": 251, "환경": 252, "언론": 254, "지역": 256, "인물": 276, "사회일반": 257}
+        sid2s_po = {"청와대": 264, "국회/정당": 265, "행정": 266, "국방/외교": 267, "북한": 268, "정치일반": 269}
+        sid2s_lf = {"여행/레저": 237, "자동차/시승기": 239, "도로/교통": 240, "건강정보": 241, "공연/전시": 242,
+                    "책": 243, "종교": 244, "생활일반": 245}
+        sid2s_wo = {"아시아/호주": 231, "미국/중남미": 232, "유럽": 233, "중동/아프리카": 234, "영문": "64f", "일문": "71a"}
+        sid2s_sp = {"국내야구": 781, "해외야구": 784, "국내축구": 787, "해외축구": "77a",
+                    "농구": "78b", "배구": 790, "골프": 792, "종합": 794, "e스포츠": "79a"}
+        sid2s_en = {"연예가화제": 221, "방송/TV": 224, "드라마": 225, "영화": 222, "해외연예": 309}
+
+        d = datetime.today()
+        l = list()
+
+        for i in range(days):
+            article_date = self.change_date_format(d - timedelta(i))
+            sid2 = None
+            if sid == "IT":
+                temp = sid2s_it[name]
+                sid2 = temp
+            elif sid == "경제":
+                temp = sid2s_ec[name]
+                sid2 = temp
+            elif sid == "정치":
+                temp = sid2s_po[name]
+                sid2 = temp
+            elif sid == "사회":
+                temp = sid2s_so[name]
+                sid2 = temp
+            elif sid == "생활":
+                temp = sid2s_lf[name]
+                sid2 = temp
+            elif sid == "세계":
+                temp = sid2s_wo[name]
+                sid2 = temp
+            elif sid == "연예":
+                temp = sid2s_en[name]
+                sid2 = temp
+            elif sid == "스포츠":
+                temp = sid2s_sp[name]
+                sid2 = temp
+
+            url = "http://news.naver.com/main/list.nhn?mode=LS2D&mid=sec" + "&sid1=" + str(sid1s[sid])
+            l = list()
+            if sid2 is not None:
+                mid_url = url + "&sid2=" + str(sid2) + "&date=" + article_date
+
+                pages = self.get_pages_count(mid_url + "&page=1")
+                for page in range(pages):
+                    final_url = mid_url + "&page=" + str(page + 1)
+                    l.append(final_url)
+            else:
+                pages = self.get_pages_count(url + "&page=1")
+                for page in range(pages):
+                    final_url = url + "&page=" + str(page + 1)
+                    l.append(final_url)
+
+        return l
+
     def get_news(self, urls):
         """
         Get article urls from article paging urls

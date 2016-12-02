@@ -4,10 +4,12 @@ from konlpy.tag import Twitter
 from konlpy.tag import Hannanum
 from konlpy.tag import Komoran
 from konlpy.tag import Mecab
+from nltk.tokenize import sent_tokenize
+from nltk.tokenize import word_tokenize
 
 
 class Splitting:
-    def __init__(self, mode):
+    def __init__(self, mode=None):
         """
         Initiate module according to mode
 
@@ -35,7 +37,11 @@ class Splitting:
 
         Returns: list of sentences
         """
-        results = self.kkma.sentences(content)
+
+        if self.mode is not None:
+            results = self.kkma.sentences(content)
+        else:
+            results = sent_tokenize(content)
         return results
 
     def split_text_to_words(self, text):
@@ -58,6 +64,8 @@ class Splitting:
             words = self.komoran.nouns(text)
         elif self.mode == "m":
             words = self.mecab.nouns(text)
+        elif self.mode is None:
+            words = word_tokenize(text)
 
         print(words)
         return words
