@@ -208,6 +208,39 @@ class Crawler:
 
         return l
 
+    def get_url_naver_en(self, days):
+        """
+        Get target article list urls
+
+        Args:
+            days: wanted article from days ago
+
+        Returns: target article url dict
+        """
+
+        sid = "세계"
+        sid2 = "64f"
+        sid3 = "657"        # (politics) 658(special) 656(business) 209(tech) 654(art) 653(sports) 652(opinion)
+
+        d = datetime.today()
+        l = list()
+
+        for i in range(days):
+            article_date = self.change_date_format(d - timedelta(i))
+
+            url = "http://news.naver.com/main/list.nhn?mode=LS2D&mid=sec" + "&sid1=" + sid + "&sid2=" + \
+                  sid2 + "&sid3=" + sid3
+
+            l = list()
+            mid_url = url + "&date=" + article_date
+
+            pages = self.get_pages_count(mid_url + "&page=1")
+            for page in range(pages):
+                final_url = mid_url + "&page=" + str(page + 1)
+                l.append(final_url)
+
+        return l
+
     def get_news(self, urls):
         """
         Get article urls from article paging urls

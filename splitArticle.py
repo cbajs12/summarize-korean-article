@@ -6,7 +6,7 @@ from konlpy.tag import Komoran
 from konlpy.tag import Mecab
 from nltk.tokenize import sent_tokenize
 from nltk.tokenize import word_tokenize
-
+from nltk.corpus import wordnet
 
 class Splitting:
     def __init__(self, mode=None):
@@ -93,10 +93,12 @@ class Splitting:
 
 
 if __name__ == "__main__":
-    ar = "이화여대 교수들은 입학 전형 과정에서 정씨를 위해 서류평가 상위점수 학생들의 면접 점수를 조정했고"
-    sh = Splitting("h")
-
-    print("h")
-    b = sh.split_text_to_words(ar)
-    sh.check_duplicates_in_words(b)
+    # ar = "이화여대 교수들은 입학 전형 과정에서 정씨를 위해 서류평가 상위점수 학생들의 면접 점수를 조정했고"
+    # sh = Splitting("h")
+    #
+    # print("h")
+    # b = sh.split_text_to_words(ar)
+    # sh.check_duplicates_in_words(b)
+    wd = wordnet.synsets('dog')
+    print(wd)
 

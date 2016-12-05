@@ -9,10 +9,13 @@ if __name__ == "__main__":
 
     print("Naver article analyzer\n")
     print("Choose Mode\n")
-    print("1. Crawling specific sector news for specific days ago or 2. Crawling specific news with url or "
-          "3. Crawling specific sector news with specific topic for specific days ago \n")
-    select = input("Write 1 or 2 \n")
+    print("1. Crawling specific sector news for specific days ago")
+    print("2. Crawling specific news with url\n")
+    print("3. Crawling specific sector news with specific topic for specific days ago \n")
+    print("4. Crawling Naver english article")
+    select = input("Choose One\n")
 
+    # c = Controller("username", "password", "instance_name", "host_address")
 
     sector = ["세계"]
 
@@ -21,7 +24,7 @@ if __name__ == "__main__":
     if select == 1:
         # crawling
         days = input("Input days \n")
-        c.article_process(sector, days)
+        c.article_process(days, sector)
     elif select == 2:
         # crawling
         url = input("Input specific news url")
@@ -29,7 +32,11 @@ if __name__ == "__main__":
     elif select == 3:
         # crawling
         days = input("Input days \n")
-        c.article_process(sector, days, sid2)
+        c.article_process(days, sector, sid2)
+    elif select == 4:
+        # crawling
+        days = input("Input days \n")
+        c.article_process(days, "en")
     else:
         print("Wrong input")
         exit()

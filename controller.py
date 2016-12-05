@@ -29,7 +29,7 @@ class Controller:
         print("connection success!!")
         print(sys.stdin.encoding)
 
-    def article_process(self, specific_sector, days, sid_name=None):
+    def article_process(self, days, specific_sector=None, sid_name=None):
         """
         Crawling articles and save them to DB
 
@@ -39,12 +39,15 @@ class Controller:
             sid_name: name of specific sub tag
         """
         cr = Crawler()
-
         sids = list()
         urls = list()
         contents = list()
-        if specific_sector.__len__() == 0:
+
+        if specific_sector is None:
             sids = ["IT", "경제", "정치", "사회", "생활", "세계", "연예", "스포츠", "오피니언"]
+        elif specific_sector == "en":
+            sids = ["세계"]
+            sid_name = "en"
         else:
             sids = specific_sector
 
@@ -54,6 +57,8 @@ class Controller:
         for sid in sids:
             if sid_name is None:
                 urls = cr.get_url(days, sid)
+            elif sid_name == "en":
+                urls = cr.get_url_naver_en(days)
             else:
                 urls = cr.get_url_special(days, sid, sid_name)
 
