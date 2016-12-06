@@ -29,7 +29,7 @@ class Controller:
         print("connection success!!")
         print(sys.stdin.encoding)
 
-    def article_process(self, days, specific_sector=None, sid_name=None):
+    def article_process(self, days=None, specific_sector=None, sid_name=None):
         """
         Crawling articles and save them to DB
 
@@ -63,7 +63,12 @@ class Controller:
                 urls = cr.get_url_special(days, sid, sid_name)
 
             urls = cr.get_news(urls)
-            contents = cr.get_content(urls, sid)
+
+            if sid_name == "en":
+                contents = cr.get_content_en(urls, sid)
+            else:
+                contents = cr.get_content(urls, sid)
+
             self.set_articles(contents)
 
     def article_process_url(self, url, tag):
@@ -98,7 +103,7 @@ class Controller:
             values = (info.get_title, info.get_content, info.get_tag, info.get_sub_tag, info.get_title)
             cur.execute(sql, values)
             self.db.commit()
-            print("Article Insertion Success!\n[%s]" % str(info))
+            # print("Article Insertion Success!\n[%s]" % str(info))
 
     def get_articles(self, tag, mode):
         """
@@ -140,7 +145,7 @@ class Controller:
                 content.set_scheck(row[record][5])
                 content.set_wcheck(row[record][6])
                 contents.append(content)
-                print(str(content))
+                # print(str(content))
         return contents
 
     def get_awords(self, aid):
@@ -170,7 +175,7 @@ class Controller:
                 content.set_word(row[record][2].decode('utf8', 'surrogatepass'))
                 content.set_count(row[record][3])
                 contents.append(content)
-                print(str(content))
+                # print(str(content))
         return contents
 
     def sentence_process(self, tags, mode, lang):
@@ -203,13 +208,13 @@ class Controller:
             for tag in tags:
                 contents = self.get_articles(tag, mode)
                 if mode == "s":
-                    se = Splitting("k")
+                    se = Splitting()
                     for content in contents:
                         results = se.split_article_to_sentence(content.get_content)
                         self.set_sentences(content.get_id, results)
                         self.update_article_scheck(content)
                 elif mode == "w":
-                    se = Splitting("h")
+                    se = Splitting()
                     for content in contents:
                         temp = se.split_text_to_words(content.get_content)
                         results = se.check_duplicates_in_words(temp)
@@ -232,7 +237,7 @@ class Controller:
             values = (aid, sentence)
             cur.execute(sql, values)
             self.db.commit()
-            print("Sentence Insertion Success!\n[%s]" % str(sentence))
+            # print("Sentence Insertion Success!\n[%s]" % str(sentence))
 
     def set_awords(self, aid, words):
         """
@@ -250,7 +255,7 @@ class Controller:
             values = (aid, key, value)
             cur.execute(sql, values)
             self.db.commit()
-            print("Awords Insertion Success!\n[%s]" % str(key))
+            # print("Awords Insertion Success!\n[%s]" % str(key))
 
     def update_article_scheck(self, content):
         """
@@ -264,7 +269,7 @@ class Controller:
         values = (content.get_id)
         cur.execute(sql, values)
         self.db.commit()
-        print("Update Article scheck Success!\n[%s]" % str(content))
+        # print("Update Article scheck Success!\n[%s]" % str(content))
 
     def update_article_wcheck(self, content):
         """
@@ -278,7 +283,7 @@ class Controller:
         values = (content.get_id)
         cur.execute(sql, values)
         self.db.commit()
-        print("Update Article wcheck Success!\n[%s]" % str(content))
+        # print("Update Article wcheck Success!\n[%s]" % str(content))
 
     def get_sentences(self, aid):
         """
@@ -309,7 +314,7 @@ class Controller:
                 content.set_weight(row[record][3])
                 content.set_wcheck(row[record][4])
                 contents.append(content)
-                print(str(content))
+                # print(str(content))
         return contents
 
     def get_sentences_all(self):
@@ -319,7 +324,7 @@ class Controller:
         Returns: list of sentence DTOs
         """
         cur = self.db.cursor()
-        sql = """SELECT * FROM sentence WHERE wcheck=0"""
+        sql = """SELECT * FROM sentence WHERE wcheck=1"""
 
         contents = list()
         cur.execute(sql)  # self.db.commit()
@@ -337,7 +342,7 @@ class Controller:
                 content.set_weight(row[record][3])
                 content.set_wcheck(row[record][4])
                 contents.append(content)
-                print(str(content))
+                # print(str(content))
         return contents
 
     def swords_process(self, aid):
@@ -355,11 +360,18 @@ class Controller:
             self.set_swords(content.get_id, content.get_aid, results)
             self.update_sentence_wcheck(content)
 
-    def swords_process_all(self):
+    def swords_process_sentence(self, lang):
         """
         Split sentence to words and save them to DB
+
+        Args:
+            lang: language of text
         """
-        se = Splitting("h")
+        if lang == "en":
+            se = Splitting()
+        else:
+            se = Splitting("h")
+
         contents = self.get_sentences_all()
         for content in contents:
             temp = se.split_text_to_words(content.get_content)
@@ -384,7 +396,7 @@ class Controller:
             values = (key, aid, sid, value)
             cur.execute(sql, values)
             self.db.commit()
-            print("Swords Insertion Success!\n[%s]" % str(key))
+            # print("Swords Insertion Success!\n[%s]" % str(key))
 
     def update_sentence_wcheck(self, content):
         """
@@ -398,7 +410,7 @@ class Controller:
         values = (content.get_id)
         cur.execute(sql, values)
         self.db.commit()
-        print("Update Sentence wcheck Success!\n[%s]" % str(content))
+        # print("Update Sentence wcheck Success!\n[%s]" % str(content))
 
     def get_swords(self, sid):
         """
@@ -429,7 +441,7 @@ class Controller:
                 content.set_sid(row[record][3])
                 content.set_count(row[record][4])
                 contents.append(content)
-                print(str(content))
+                # print(str(content))
         return contents
 
     def get_swords_count(self, sid):
@@ -486,12 +498,17 @@ class Controller:
 
 if __name__ == "__main__":
     print("hi")
-    # cr = articleCrawler.Crawler()
-    # print(result)
-    # c.set_articles(result)
-    # c.get_sentences(1)
-    # c.swords_process(1)
-    # c.sentence_process(["정치"], "w")
+
+    # c = Controller("username", "password", "instance_name", "host_address")
+
+    days = 1
+    sector = ["세계"]
+    # c.article_process(days, "en")
+    # c.sentence_process(sector, "s", "en")
+    # c.sentence_process(sector, "w", "en")
+    # c.swords_process_sentence("en")
+
+
 
 
 

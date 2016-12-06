@@ -61,7 +61,7 @@ if __name__ == "__main__":
     c.sentence_process(sector, "w", "en")
 
     # sentences to words
-    c.swords_process_all()
+    c.swords_process_sentence("en")
 
     # pre-processing
     # fuzzy algorithm

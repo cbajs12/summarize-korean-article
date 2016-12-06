@@ -4,6 +4,7 @@ import requests
 import bs4
 import urllib.parse as urlparse
 from articleDTO import Article
+import re
 
 
 class Crawler:
@@ -218,7 +219,7 @@ class Crawler:
         Returns: target article url dict
         """
 
-        sid = "세계"
+        sid = "104"
         sid2 = "64f"
         sid3 = "657"        # (politics) 658(special) 656(business) 209(tech) 654(art) 653(sports) 652(opinion)
 
@@ -228,7 +229,7 @@ class Crawler:
         for i in range(days):
             article_date = self.change_date_format(d - timedelta(i))
 
-            url = "http://news.naver.com/main/list.nhn?mode=LS2D&mid=sec" + "&sid1=" + sid + "&sid2=" + \
+            url = "http://news.naver.com/main/list.nhn?mode=LS3D&mid=sec" + "&sid1=" + sid + "&sid2=" + \
                   sid2 + "&sid3=" + sid3
 
             l = list()
@@ -275,9 +276,10 @@ class Crawler:
             url_lists = list(set(url_lists))    # remove duplicates
             # time.sleep(0.000001)
 
-        for index, url_list in enumerate(url_lists):
-            result_text = '[%d개] %s' % (index + 1, url_list)
-            print(result_text)
+        # for index, url_list in enumerate(url_lists):
+        #     result_text = '[%d개] %s' % (index + 1, url_list)
+        #     print(result_text)
+
         return url_lists
 
     def get_single_news(self, url, tag):
@@ -350,7 +352,7 @@ class Crawler:
 
             text = ""
             content = contents.find("div", id="articleBodyContents")
-            # print(content)
+            print(content)
             if content.find("table") is None:
                 text = content.get_text()
             else:
@@ -367,17 +369,58 @@ class Crawler:
             article.set_tag(tag)
             article.set_sub_tag(sub_tag)
             results.append(article)
-            print(str(article) + ' Original')
+            # print(str(article) + ' Original')
+        return results
+
+    def get_content_en(self, urls, tag):
+        """
+        Get article contents from article urls
+
+        Args:
+            urls: article urls
+            tag: article tag
+
+        Returns: list of article DTOs
+        """
+        results = list()
+
+        for url in urls:
+            sub_tag = dict(urlparse.parse_qsl(urlparse.urlsplit(url).query))["sid2"]
+
+            # print(url)
+            res = requests.get(url)
+            html_content = res.text
+
+            navigator = bs4.BeautifulSoup(html_content, 'html5lib')
+
+            contents = navigator.find("div", id="main_content")
+            header = contents.h3.get_text().strip().replace("\"\r\n\t", '')
+
+            text = ""
+            content = contents.find("div", id="articleBodyContents")
+
+            if content.find("table") is None:
+                text = content.get_text()
+            else:
+                continue
+
+            if text == "":
+                continue
+
+            [s.extract() for s in content(['style', 'script', '[document]', 'head', 'title'])]
+            text = content.get_text().strip()
+
+            article = Article()
+            article.set_title(header)
+            article.set_content(text)
+            article.set_tag(tag)
+            article.set_sub_tag(sub_tag)
+            results.append(article)
+            # print(str(article) + ' Original')
         return results
 
 if __name__ == "__main__":
-    target = "정치"
     c = Crawler()
-    # result = c.get_url(1, target)
-    # print(result)
-    # c.get_news(result)
-    c.get_content(["http://news.naver.com/main/read.nhn?mode=LS2D&mid=sec&sid1=100&sid2=269&oid=009&aid=0003837948"], "정치")
-
-    # s = 'http://news.naver.com/main/list.nhn?mode=LS2D&mid=sec&sid1=100&sid2=266&date=20161116&page=2'
-    # d = dict(urlparse.parse_qsl(urlparse.urlsplit(s).query))["sid2"]
-    # print(d)
+    a = c.get_url_naver_en(1)
+    print(a)
+    d = c.get_news(a)

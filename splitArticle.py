@@ -6,7 +6,8 @@ from konlpy.tag import Komoran
 from konlpy.tag import Mecab
 from nltk.tokenize import sent_tokenize
 from nltk.tokenize import word_tokenize
-from nltk.corpus import wordnet
+from nltk.tokenize import RegexpTokenizer
+
 
 class Splitting:
     def __init__(self, mode=None):
@@ -65,9 +66,10 @@ class Splitting:
         elif self.mode == "m":
             words = self.mecab.nouns(text)
         elif self.mode is None:
-            words = word_tokenize(text)
+            tokenizer = RegexpTokenizer(r'\w+')
+            words = tokenizer.tokenize(text)
 
-        print(words)
+        # print(words)
         return words
 
     def check_duplicates_in_words(self, words):
@@ -88,17 +90,15 @@ class Splitting:
             else:
                 results[word] += 1
 
-        print(results)
+        # print(results)
         return results
 
 
 if __name__ == "__main__":
-    # ar = "이화여대 교수들은 입학 전형 과정에서 정씨를 위해 서류평가 상위점수 학생들의 면접 점수를 조정했고"
-    # sh = Splitting("h")
+    ar = "By John RedmondThe Camarata Music Company Chorale (CMC) and Orchestra will perform its annual holiday concert of Handel’s “Messiah” at Chungdong First Methodist Church, central Seoul, Saturday.The performance will feature the Camarata Chorale, an amateur singing group.Conductor Dr. Ryan Goessl will perform with special guests, including soloists Oh Shin-young, Nam Jung-hee (mezzo-soprano), Hong Myoung-po (tenor) and Seong Seung-wook (bass).The event will also feature a pre-concert Christmas performance from the Camarata Children’s Choir.The CMC is a nonprofit organization that presents opportunities for the public to hear classical music performed by people from many different cultures and nationalities."
+    sh = Splitting()
     #
-    # print("h")
-    # b = sh.split_text_to_words(ar)
-    # sh.check_duplicates_in_words(b)
-    wd = wordnet.synsets('dog')
-    print(wd)
+    print("h")
+    b = sh.split_text_to_words(ar)
+    sh.check_duplicates_in_words(b)
 
