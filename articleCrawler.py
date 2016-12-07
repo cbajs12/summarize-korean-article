@@ -4,7 +4,6 @@ import requests
 import bs4
 import urllib.parse as urlparse
 from articleDTO import Article
-import re
 
 
 class Crawler:

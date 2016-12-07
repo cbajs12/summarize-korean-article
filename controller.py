@@ -324,7 +324,7 @@ class Controller:
         Returns: list of sentence DTOs
         """
         cur = self.db.cursor()
-        sql = """SELECT * FROM sentence WHERE wcheck=1"""
+        sql = """SELECT * FROM sentence WHERE wcheck=0"""
 
         contents = list()
         cur.execute(sql)  # self.db.commit()

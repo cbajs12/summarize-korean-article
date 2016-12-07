@@ -5,7 +5,6 @@ from konlpy.tag import Hannanum
 from konlpy.tag import Komoran
 from konlpy.tag import Mecab
 from nltk.tokenize import sent_tokenize
-from nltk.tokenize import word_tokenize
 from nltk.tokenize import RegexpTokenizer
 
 
